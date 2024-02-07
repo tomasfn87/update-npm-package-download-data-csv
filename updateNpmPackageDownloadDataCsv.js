@@ -1,17 +1,26 @@
 import npm from "npm-stats-api";
 import fs from "fs";
 
-const [, , packageName, start, end, outputOrUpdateFile] = process.argv;
+const main = () => {
+    const [, , packageName, start, end, outputOrUpdateFile] = process.argv;
+    let dates = [];
+    try {
+        dates = getDateInterval(start, end)
+    } catch {
+        return
+    }
 
-const npmStats = async (packageName, start, end) => {
-    const res = await npm.stat(packageName, start, end);
-    return res
+    fetchNpmPkgDownloadDataOfIntervalToCsv(dates, packageName, outputOrUpdateFile)
 };
 
-function getDateInterval(startDate, endDate) {
+const getDateInterval = (startDate, endDate) => {
     const dates = [];
     const current = new Date(startDate);
     let end = new Date(endDate);
+
+    if (current > end) {
+        console.error("ERROR: start date must be before or equal to end date.")
+    }
     
     const today = new Date();
     const aDayBeforeYesterday = today;
@@ -28,15 +37,9 @@ function getDateInterval(startDate, endDate) {
     }
 
     return dates
-}
-
-const getYMDFromDate = (date) => {
-    return date.toISOString().substring(0, 10)
 };
 
-const dates = getDateInterval(start, end);
-
-async function processDates(dates, packageName, outputOrUpdateFile) {
+const fetchNpmPkgDownloadDataOfIntervalToCsv = async (dates, packageName, outputOrUpdateFile) => {
     let existingCsvData = [];
 
     if (fs.existsSync(outputOrUpdateFile)) {
@@ -51,9 +54,9 @@ async function processDates(dates, packageName, outputOrUpdateFile) {
                 const packageDataOfADay = await npmStats(packageName, date, date);
                 existingCsvData.push({
                     date: date,
-                    downloads: packageDataOfADay.body.downloads,
+                    downloads: packageDataOfADay.body.downloads
                 });
-                console.log(`Downloads of ${date}: ${packageDataOfADay.body.downloads}`)
+                console.log(`Downloads for ${date}: ${packageDataOfADay.body.downloads}`)
             } catch (error) {
                 console.error(error)
             }
@@ -66,9 +69,13 @@ async function processDates(dates, packageName, outputOrUpdateFile) {
         .map((row) => `${row.date}, ${row.downloads}`)
         .join('\n')}`;
     fs.writeFileSync(outputOrUpdateFile, csvContent)
-}
+};
 
-function parseCsv(csvContent) {
+const getYMDFromDate = (date) => {
+    return date.toISOString().substring(0, 10)
+};
+
+const parseCsv = (csvContent) => {
     const lines = csvContent.trim().split('\n');
     const headers = lines.shift().split(',');
 
@@ -76,9 +83,13 @@ function parseCsv(csvContent) {
         const values = line.split(',');
         return headers.reduce((obj, header, index) => {
             obj[header.trim()] = values[index].trim();
-            return obj;
-        }, {});
+            return obj
+        }, {})
     })
-}
+};
 
-processDates(dates, packageName, outputOrUpdateFile)
+const npmStats = async (packageName, start, end) => {
+    return await npm.stat(packageName, start, end)
+};
+
+main()
