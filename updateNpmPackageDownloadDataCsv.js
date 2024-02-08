@@ -23,12 +23,12 @@ const getDateInterval = (startDate, endDate) => {
     }
     
     const today = new Date();
-    const aDayBeforeYesterday = today;
-    aDayBeforeYesterday.setDate(today.getDate() - 2);
+    const twoDaysBeforeYesterday = today;
+    twoDaysBeforeYesterday.setDate(today.getDate() - 3);
 
-    if (getYMDFromDate(end) >= getYMDFromDate(aDayBeforeYesterday)) {
-        end = aDayBeforeYesterday;
-        console.log("--> End date changed to a day before yesterday to avoid data loss!\n")
+    if (getYMDFromDate(end) >= getYMDFromDate(twoDaysBeforeYesterday)) {
+        end = twoDaysBeforeYesterday;
+        console.log("--> End date changed to two days before yesterday to avoid data loss!\n")
     }
 
     while (current <= end) {
