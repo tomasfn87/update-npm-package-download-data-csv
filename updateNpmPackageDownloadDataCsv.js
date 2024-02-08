@@ -15,24 +15,29 @@ const main = () => {
 
 const getDateInterval = (startDate, endDate) => {
     const dates = [];
-    const current = new Date(startDate);
-    let end = new Date(endDate);
+    let current = new Date();
+    let end = new Date();
+    try {
+        current = new Date(startDate);
+        end = new Date(endDate);
+    } catch {
+        console.error("ERROR: start and end dates must be in format YYYY-MM-DD.")
+    }
 
     if (current > end) {
         console.error("ERROR: start date must be before or equal to end date.")
     }
-    
-    const today = new Date();
-    const twoDaysBeforeYesterday = today;
-    twoDaysBeforeYesterday.setDate(today.getDate() - 3);
 
-    if (getYMDFromDate(end) >= getYMDFromDate(twoDaysBeforeYesterday)) {
-        end = twoDaysBeforeYesterday;
-        console.log("--> End date changed to two days before yesterday to avoid data loss!\n")
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    if (end > threeDaysAgo) {
+        end = threeDaysAgo;
+        console.log("--> End date changed to 3 days ago to avoid data loss!")
     }
 
     while (current <= end) {
-        dates.push(new Date(current));
+        dates.push(new Date(current))
         current.setDate(current.getDate() + 1)
     }
 
@@ -46,6 +51,13 @@ const fetchNpmPkgDownloadDataOfIntervalToCsv = async (dates, packageName, output
         const existingCsvContent = fs.readFileSync(outputOrUpdateFile, 'utf8');
         existingCsvData = parseCsv(existingCsvContent)
     }
+
+    const last15Days = getDatesForLastNDays(15).map(date => getYMDFromDate(date));
+
+    existingCsvData = existingCsvData.filter((row) => {
+        const rowDate = row.date;
+        return !last15Days.includes(rowDate)
+    });
 
     for (const d of dates) {
         const date = getYMDFromDate(d);
@@ -71,6 +83,17 @@ const fetchNpmPkgDownloadDataOfIntervalToCsv = async (dates, packageName, output
     fs.writeFileSync(outputOrUpdateFile, csvContent)
 };
 
+const getDatesForLastNDays = (n) => {
+    const dates = [];
+    const today = new Date();
+    for (let i = n - 1; i >= 0; i--) {
+        const day = new Date(today);
+        day.setDate(today.getDate() - i);
+        dates.push(day)
+    }
+    return dates
+};
+
 const getYMDFromDate = (date) => {
     return date.toISOString().substring(0, 10)
 };
@@ -84,8 +107,8 @@ const parseCsv = (csvContent) => {
         return headers.reduce((obj, header, index) => {
             obj[header.trim()] = values[index].trim();
             return obj
-        }, {})
-    })
+        }, {});
+    });
 };
 
 const npmStats = async (packageName, start, end) => {
