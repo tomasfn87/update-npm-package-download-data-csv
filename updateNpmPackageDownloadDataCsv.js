@@ -52,11 +52,11 @@ const fetchNpmPkgDownloadDataOfIntervalToCsv = async (dates, packageName, output
         existingCsvData = parseCsv(existingCsvContent)
     }
 
-    const last15Days = getDatesForLastNDays(15).map(date => getYMDFromDate(date));
+    const reDownloadPeriod = getDatesForLastNDays(30).map(date => getYMDFromDate(date));
 
     existingCsvData = existingCsvData.filter((row) => {
         const rowDate = row.date;
-        return !last15Days.includes(rowDate)
+        return !reDownloadPeriod.includes(rowDate)
     });
 
     for (const d of dates) {
