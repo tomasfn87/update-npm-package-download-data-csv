@@ -28,12 +28,13 @@ const getDateInterval = (startDate, endDate) => {
         console.error("ERROR: start date must be before or equal to end date.")
     }
 
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const daysToWait = 5;
+    const waitTime = new Date();
+    waitTime.setDate(waitTime.getDate() - daysToWait);
 
-    if (end > threeDaysAgo) {
-        end = threeDaysAgo;
-        console.log("--> End date changed to 3 days ago to avoid data loss!")
+    if (end > waitTime) {
+        end = waitTime;
+        console.log(`--> End date changed to ${daysToWait} days ago to avoid data loss!`)
     }
 
     while (current <= end) {
