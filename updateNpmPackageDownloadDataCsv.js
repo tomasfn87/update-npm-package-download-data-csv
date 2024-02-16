@@ -17,15 +17,16 @@ const getDateInterval = (startDate, endDate) => {
     const dates = [];
     let current = new Date();
     let end = new Date();
+
     try {
         current = new Date(startDate);
-        end = new Date(endDate);
+        end = new Date(endDate)
     } catch {
         console.error("ERROR: start and end dates must be in format YYYY-MM-DD.")
     }
 
     if (current > end) {
-        console.error("ERROR: start date must be before or equal to end date.")
+        [current, end] = [end, current]
     }
 
     const daysToWait = 5;
@@ -38,7 +39,7 @@ const getDateInterval = (startDate, endDate) => {
     }
 
     while (current <= end) {
-        dates.push(new Date(current))
+        dates.push(new Date(current));
         current.setDate(current.getDate() + 1)
     }
 
@@ -103,7 +104,7 @@ const parseCsv = (csvContent) => {
     const lines = csvContent.trim().split('\n');
     const headers = lines.shift().split(',');
 
-    return lines.map((line) => {
+    return lines.map(line => {
         const values = line.split(',');
         return headers.reduce((obj, header, index) => {
             obj[header.trim()] = values[index].trim();
