@@ -1,5 +1,6 @@
 import npm from "npm-stats-api";
 import fs from "fs";
+import { color } from "./tools/color.js";
 
 const main = () => {
     const [, , packageName, start, end, outputOrUpdateFile] = process.argv;
@@ -35,7 +36,8 @@ const getDateInterval = (startDate, endDate) => {
 
     if (end > waitTime) {
         end = waitTime;
-        console.log(`--> End date changed to ${daysToWait} days ago to avoid data loss!`)
+        color.log("default", `--> End date changed to ${daysToWait} days ago `);
+        console.log("to avoid data loss!\n");
     }
 
     while (current <= end) {
@@ -70,7 +72,11 @@ const fetchNpmPkgDownloadDataOfIntervalToCsv = async (dates, packageName, output
                     date: date,
                     downloads: packageDataOfADay.body.downloads
                 });
-                console.log(`Downloads for ${date}: ${packageDataOfADay.body.downloads}`)
+                color.log("dim", "Downloads in ");
+                color.log("default", date);
+                color.log("dim", ": ");
+                color.log("brightYellow",
+                    `${formatNumber(packageDataOfADay.body.downloads, true)}\n`);
             } catch (error) {
                 console.error(error)
             }
@@ -78,6 +84,19 @@ const fetchNpmPkgDownloadDataOfIntervalToCsv = async (dates, packageName, output
     }
 
     existingCsvData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const totalDownloads = existingCsvData.reduce(((total, e) =>
+        total + parseInt(e.downloads)), 0);
+
+    color.log("default", "\nPackage ");
+    color.log("brightCyan", `${packageName}\n`);
+    color.log("default", "\tTotal Downloads: ");
+    color.log("brightGreen", `\t${formatNumber(totalDownloads, true)}\n`);
+    color.log("dim", "\t(from ");
+    color.log("cyan", getYMDFromDate(dates.at(0)));
+    color.log("dim", " to ");
+    color.log("cyan", getYMDFromDate(dates.at(-1)));
+    color.log("dim", ")\n");
 
     const csvContent = `date, downloads\n${existingCsvData
         .map((row) => `${row.date}, ${row.downloads}`)
@@ -116,5 +135,10 @@ const parseCsv = (csvContent) => {
 const npmStats = async (packageName, start, end) => {
     return await npm.stat(packageName, start, end)
 };
+
+function formatNumber(number, useComma = false) {
+    const locale = useComma ? 'en-US' : 'de-DE'; // 'en-US' for commas, 'de-DE' for dots
+    return new Intl.NumberFormat(locale).format(number);
+}
 
 main()
